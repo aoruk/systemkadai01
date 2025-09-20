@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>Laravel</title>
+        <title>学生管理システム - メニュー</title>
 
         <!-- Fonts -->
         <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200;600&display=swap" rel="stylesheet">
@@ -45,54 +45,58 @@
             }
 
             .title {
-                font-size: 84px;
+                font-size: 48px;
+                margin-bottom: 50px;
             }
 
-            .links > a {
-                color: #636b6f;
-                padding: 0 25px;
-                font-size: 13px;
+            .menu-buttons {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+
+            .menu-buttons a {
+                display: inline-block;
+                background-color: #3490dc;
+                color: white;
+                padding: 15px 30px;
+                font-size: 18px;
                 font-weight: 600;
-                letter-spacing: .1rem;
                 text-decoration: none;
-                text-transform: uppercase;
+                border-radius: 8px;
+                min-width: 200px;
+                transition: background-color 0.3s;
             }
 
-            .m-b-md {
-                margin-bottom: 30px;
+            .menu-buttons a:hover {
+                background-color: #2779bd;
+            }
+
+            .register-btn {
+                background-color: #38c172 !important;
+            }
+
+            .register-btn:hover {
+                background-color: #32a562 !important;
             }
         </style>
     </head>
     <body>
         <div class="flex-center position-ref full-height">
-            @if (Route::has('login'))
-                <div class="top-right links">
-                    @auth
-                        <a href="{{ url('/home') }}">Home</a>
-                    @else
-                        <a href="{{ route('login') }}">Login</a>
-
-                        @if (Route::has('register'))
-                            <a href="{{ route('register') }}">Register</a>
-                        @endif
-                    @endauth
-                </div>
-            @endif
+            <div class="top-right">
+                <a href="{{ route('login') }}" style="color: #636b6f; text-decoration: none;">ログイン</a>
+            </div>
 
             <div class="content">
-                <div class="title m-b-md">
-                    Laravel
+                <div class="title">
+                    学生管理システム<br>メニュー画面
                 </div>
 
-                <div class="links">
-                    <a href="https://laravel.com/docs">Docs</a>
-                    <a href="https://laracasts.com">Laracasts</a>
-                    <a href="https://laravel-news.com">News</a>
-                    <a href="https://blog.laravel.com">Blog</a>
-                    <a href="https://nova.laravel.com">Nova</a>
-                    <a href="https://forge.laravel.com">Forge</a>
-                    <a href="https://vapor.laravel.com">Vapor</a>
-                    <a href="https://github.com/laravel/laravel">GitHub</a>
+                <div class="menu-buttons">
+                    <a href="{{ route('register') }}" class="register-btn">新規登録</a>
+                    <a href="{{ route('students.create') }}">学生登録</a>
+                    <a href="{{ route('students.index') }}">学生表示</a>
                 </div>
             </div>
         </div>
