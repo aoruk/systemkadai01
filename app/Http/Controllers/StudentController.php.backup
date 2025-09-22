@@ -1,0 +1,121 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Student;
+
+class StudentController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $students = Student::all();
+        return view('students.index', compact('students'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return view('students.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+    $validated = $request->validate([
+        'grade' => 'required|integer',
+        'name' => 'required|string|max:255',
+        'address' => 'nullable|string',
+        'img_path' => 'nullable|string',
+        'comment' => 'nullable|string',
+    ]);
+
+    dd('バリデーション通過'); 
+    }// ← ここで止まればバリデーションは通っている
+    
+    Student::create($validated);
+
+    return redirect()->route('students.index')
+                     ->with('success', '学生が正常に登録されました。');
+    }
+}
+
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(Student $student)
+    {
+        // 学生の成績データを関連テーブルから取得
+        // gradesリレーションを使用して成績データを取得し、科目名でソート
+        $student->load(['grades' => function($query) {
+            $query->orderBy('subject', 'asc')->orderBy('created_at', 'desc');
+        }]);
+
+        // 成績の統計情報を計算
+        $grades = $student->grades;
+        $gradeStats = [
+            'total_grades' => $grades->count(),
+            'average_score' => $grades->count() > 0 ? round($grades->avg('score'), 2) : 0,
+            'highest_score' => $grades->count() > 0 ? $grades->max('score') : 0,
+            'lowest_score' => $grades->count() > 0 ? $grades->min('score') : 0,
+        ];
+
+        // 科目別の成績統計
+        $subjectStats = $grades->groupBy('subject')->map(function($subjectGrades) {
+            return [
+                'count' => $subjectGrades->count(),
+                'average' => round($subjectGrades->avg('score'), 2),
+                'latest_score' => $subjectGrades->first()->score ?? 0,
+                'latest_date' => $subjectGrades->first()->exam_date ?? null,
+            ];
+        });
+
+        return view('students.show', compact('student', 'gradeStats', 'subjectStats'));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Student $student)
+    {
+        return view('students.edit', compact('student'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Student $student)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:students,email,' . $student->id,
+            'student_id' => 'required|string|max:20|unique:students,student_id,' . $student->id,
+            'grade_level' => 'required|integer|min:1|max:12',
+        ]);
+
+        $student->update($request->all());
+
+        return redirect()->route('students.index')
+                        ->with('success', '学生情報が正常に更新されました。');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Student $student)
+    {
+        // 関連する成績データも一緒に削除される（Studentモデルでcascadeが設定されている場合）
+        $student->delete();
+
+        return redirect()->route('students.index')
+                        ->with('success', '学生が正常に削除されました。');
+    }
+}

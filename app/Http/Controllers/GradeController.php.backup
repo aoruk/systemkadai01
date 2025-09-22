@@ -1,0 +1,121 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\SchoolGrade;
+use App\Student;
+
+class GradeController extends Controller
+{
+    /**
+     * 成績追加画面を表示
+     */
+    public function create($studentId)
+    {
+        $student = Student::findOrFail($studentId);
+        return view('grades.create', compact('student'));
+    }
+
+    /**
+     * 成績登録処理
+     */
+    public function store(Request $request, $studentId)
+    {
+        $student = Student::findOrFail($studentId);
+        
+        $validatedData = $request->validate([
+            'grade' => 'required|integer|between:1,6',
+            'term' => 'required|integer|between:1,3',
+            'japanese' => 'nullable|integer|between:1,5',
+            'math' => 'nullable|integer|between:1,5',
+            'science' => 'nullable|integer|between:1,5',
+            'social_studies' => 'nullable|integer|between:1,5',
+            'english' => 'nullable|integer|between:1,5',
+            'music' => 'nullable|integer|between:1,5',
+            'art' => 'nullable|integer|between:1,5',
+            'home_economics' => 'nullable|integer|between:1,5',
+            'health_and_physical_education' => 'nullable|integer|between:1,5',
+        ]);
+
+        // 重複チェック
+        $existingGrade = SchoolGrade::where('student_id', $studentId)
+            ->where('grade', $validatedData['grade'])
+            ->where('term', $validatedData['term'])
+            ->first();
+
+        if ($existingGrade) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['duplicate' => 'この学生の同じ学年・学期の成績は既に登録されています。']);
+        }
+
+        $validatedData['student_id'] = $studentId;
+        SchoolGrade::create($validatedData);
+
+        return redirect()->route('students.show', $studentId)
+            ->with('success', '成績を登録しました');
+    }
+
+    /**
+     * 成績編集画面を表示
+     */
+    public function edit($id)
+    {
+        $grade = SchoolGrade::with('student')->findOrFail($id);
+        return view('grades.edit', compact('grade'));
+    }
+
+    /**
+     * 成績更新処理
+     */
+    public function update(Request $request, $id)
+    {
+        $grade = SchoolGrade::findOrFail($id);
+        
+        $validatedData = $request->validate([
+            'grade' => 'required|integer|between:1,6',
+            'term' => 'required|integer|between:1,3',
+            'japanese' => 'nullable|integer|between:1,5',
+            'math' => 'nullable|integer|between:1,5',
+            'science' => 'nullable|integer|between:1,5',
+            'social_studies' => 'nullable|integer|between:1,5',
+            'english' => 'nullable|integer|between:1,5',
+            'music' => 'nullable|integer|between:1,5',
+            'art' => 'nullable|integer|between:1,5',
+            'home_economics' => 'nullable|integer|between:1,5',
+            'health_and_physical_education' => 'nullable|integer|between:1,5',
+        ]);
+
+        // 重複チェック（自分以外のレコード）
+        $existingGrade = SchoolGrade::where('student_id', $grade->student_id)
+            ->where('grade', $validatedData['grade'])
+            ->where('term', $validatedData['term'])
+            ->where('id', '!=', $id)
+            ->first();
+
+        if ($existingGrade) {
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['duplicate' => 'この学生の同じ学年・学期の成績は既に登録されています。']);
+        }
+
+        $grade->update($validatedData);
+
+        return redirect()->route('students.show', $grade->student_id)
+            ->with('success', '成績を更新しました');
+    }
+
+    /**
+     * 成績削除処理
+     */
+    public function destroy($id)
+    {
+        $grade = SchoolGrade::findOrFail($id);
+        $studentId = $grade->student_id;
+        $grade->delete();
+
+        return redirect()->route('students.show', $studentId)
+            ->with('success', '成績を削除しました');
+    }
+}

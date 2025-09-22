@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateStudentsTable extends Migration
+class UpdateStudentsTableForSpecification extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,25 @@ class CreateStudentsTable extends Migration
      */
     public function up()
     {
-        Schema::create('students', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->string('grade');           // 学年
-            $table->string('name');            // 名前
-            $table->text('address');           // 住所
-            $table->string('img_path')->nullable();  // 画像パス（nullable）
-            $table->text('comment')->nullable();     // コメント（nullable）
-            $table->timestamps();
+        Schema::table('students', function (Blueprint $table) {
+            // 既存のemail, class_nameカラムを削除（データがある場合は注意）
+            if (Schema::hasColumn('students', 'email')) {
+                $table->dropColumn('email');
+            }
+            if (Schema::hasColumn('students', 'class_name')) {
+                $table->dropColumn('class_name');
+            }
+            
+            // gradeを数値型に変更（現在はstring）
+            $table->integer('grade')->change();
+            
+            // 仕様書に合わせてカラムを追加（既存の場合はスキップ）
+            if (!Schema::hasColumn('students', 'img_path')) {
+                $table->string('img_path')->nullable()->after('address');
+            }
+            if (!Schema::hasColumn('students', 'comment')) {
+                $table->text('comment')->nullable()->after('img_path');
+            }
         });
     }
 
@@ -31,6 +42,11 @@ class CreateStudentsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('students');
+        Schema::table('students', function (Blueprint $table) {
+            // ロールバック時の処理
+            $table->string('email')->nullable();
+            $table->string('class_name')->nullable();
+            $table->string('grade')->change();
+        });
     }
 }
